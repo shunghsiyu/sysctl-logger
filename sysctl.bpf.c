@@ -14,16 +14,22 @@
 SEC("cgroup/sysctl")
 int sysctl_logger(struct bpf_sysctl *ctx)
 {
-	char name[MAX_NAME_STR_LEN] = "World";
+	char name[MAX_NAME_STR_LEN];
 	int ret;
 
-	//ret = bpf_sysctl_get_name(ctx, name, sizeof(name), 0);
-	//if (!ret)
-	//	return 0;
+	/* Ignore reads */
+	if (!ctx->write)
+		goto out;
+
+	memset(name, 0, sizeof(name));
+	ret = bpf_sysctl_get_name(ctx, name, sizeof(name), 0);
+	if (!ret)
+		goto out;
 
 	bpf_printk("Hello %s!\n", name);
 
-	return 1;
+out:
+	return 1; /* Allow read/write */
 }
 
 char _license[] SEC("license") = "GPL";
