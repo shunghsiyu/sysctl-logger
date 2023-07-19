@@ -1,7 +1,15 @@
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <bpf/bpf.h>
 #include "sysctl.skel.h"
+
+static volatile sig_atomic_t exiting = 0;
+
+static void sig_int(int signo)
+{
+	exiting = 1;
+}
 
 int get_root_cgroup(void)
 {
@@ -24,6 +32,12 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	if (signal(SIGINT, sig_int) == SIG_ERR) {
+		err = errno;
+		fprintf(stderr, "Can't set signal handler: %s\n", strerror(errno));
+		goto cleanup;
+	}
+
 	cfgd = get_root_cgroup();
 	if (cfgd < 0) {
 		fprintf(stderr, "Failed to open root CGroup\n");
@@ -39,11 +53,14 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stderr, "Begin monitoring sysctl changes\n");
-	for (;;) {
+	while (!exiting) {
 		fprintf(stderr, ".");
 		sleep(1);
 	}
 
+	err = bpf_prog_detach2(bpfd, cfgd, BPF_CGROUP_SYSCTL);
+	if (err)
+		fprintf(stderr, "Failed to detach BPF program sysctl_logger\n");
 cleanup:
 	sysctl_bpf__destroy(skel);
 	return -err;
