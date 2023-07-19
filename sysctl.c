@@ -52,7 +52,8 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	fprintf(stderr, "Begin monitoring sysctl changes\n");
+	fprintf(stderr, "Begin monitoring sysctl changes.\n");
+	fprintf(stderr, "Run `sudo cat /sys/kernel/debug/tracing/trace_pipe` to see the changes\n");
 	while (!exiting) {
 		fprintf(stderr, ".");
 		sleep(1);

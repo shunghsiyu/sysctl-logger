@@ -10,11 +10,12 @@
 #include <bpf/bpf_helpers.h>
 
 #define MAX_NAME_STR_LEN 32
+#define MAX_VALUE_STR_LEN 0x40
 
 SEC("cgroup/sysctl")
 int sysctl_logger(struct bpf_sysctl *ctx)
 {
-	char name[MAX_NAME_STR_LEN];
+	char name[MAX_NAME_STR_LEN], value[MAX_VALUE_STR_LEN];
 	int ret;
 
 	/* Ignore reads */
@@ -26,7 +27,11 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	if (!ret)
 		goto out;
 
-	bpf_printk("Hello %s!\n", name);
+	ret = bpf_sysctl_get_new_value(ctx, value, sizeof(value));
+	if (!ret)
+		goto out;
+
+	bpf_printk("%s: %s\n", name, value);
 
 out:
 	return 1; /* Allow read/write */
