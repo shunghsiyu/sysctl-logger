@@ -20,8 +20,11 @@ int get_root_cgroup(void)
 {
 	int fd;
 
-	fd = open("/sys/fs/cgroup", O_RDONLY);
+	fd = open("/sys/fs/cgroup/unified", O_RDONLY);
+	if (fd > 0)
+		return fd;
 
+	fd = open("/sys/fs/cgroup", O_RDONLY);
 	return fd;
 }
 
