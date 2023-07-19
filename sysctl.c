@@ -11,6 +11,11 @@ static void sig_int(int signo)
 	exiting = 1;
 }
 
+static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va_list args)
+{
+	return vfprintf(stderr, format, args);
+}
+
 int get_root_cgroup(void)
 {
 	int fd;
@@ -24,6 +29,9 @@ int main(int argc, char **argv)
 {
 	struct sysctl_bpf *skel;
 	int bpfd, cfgd, err;
+
+	/* Set up libbpf errors and debug info callback */
+	libbpf_set_print(libbpf_print_fn);
 
 	skel = sysctl_bpf__open_and_load();
 	if (!skel) {
