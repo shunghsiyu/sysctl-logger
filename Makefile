@@ -12,7 +12,7 @@ ARCH ?= $(shell uname -m | sed 's/x86_64/x86/' \
 # Use our own libbpf API headers and Linux UAPI headers distributed with
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
-INCLUDES := -I$(OUTPUT) -I../../libbpf/include/uapi
+INCLUDES := -I$(OUTPUT)
 CFLAGS := -g -Wall
 ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 
