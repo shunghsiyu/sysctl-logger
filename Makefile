@@ -1,10 +1,15 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 OUTPUT := .output
+LIBDIR ?= /usr/lib64
 SBINDIR ?= /usr/sbin
 UNITDIR ?= /usr/lib/systemd/system
 CLANG ?= clang
 LIBBPF_SRC := $(abspath ./libbpf/src)
-LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
+ifdef FORCE_SYSTEM_LIBBPF
+	LIBBPF_OBJ := $(LIBDIR)/libbpf.so
+else
+	LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
+endif
 BPFTOOL ?= /usr/sbin/bpftool
 ARCH ?= $(shell uname -m | sed 's/x86_64/x86/' \
 			 | sed 's/arm.*/arm/' \
@@ -66,6 +71,7 @@ $(OUTPUT) $(OUTPUT)/libbpf:
 	$(call msg,MKDIR,$@)
 	$(Q)mkdir -p $@
 
+ifndef FORCE_SYSTEM_LIBBPF
 # Build libbpf
 $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPUT)/libbpf
 	$(call msg,LIB,$@)
@@ -73,6 +79,7 @@ $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPU
 		    OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@)		      \
 		    INCLUDEDIR= LIBDIR= UAPIDIR=			      \
 		    install
+endif
 
 # Build BPF code
 $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) | $(OUTPUT) $(BPFTOOL)
