@@ -15,7 +15,7 @@
 SEC("cgroup/sysctl")
 int sysctl_logger(struct bpf_sysctl *ctx)
 {
-	char name[MAX_NAME_STR_LEN], value[MAX_VALUE_STR_LEN];
+	char name[MAX_NAME_STR_LEN], old_value[MAX_VALUE_STR_LEN], new_value[MAX_VALUE_STR_LEN];
 	int ret;
 
 	/* Ignore reads */
@@ -27,11 +27,15 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	if (!ret)
 		goto out;
 
-	ret = bpf_sysctl_get_new_value(ctx, value, sizeof(value));
+	ret = bpf_sysctl_get_current_value(ctx, old_value, sizeof(old_value));
 	if (!ret)
 		goto out;
 
-	bpf_printk("%s: %s\n", name, value);
+	ret = bpf_sysctl_get_new_value(ctx, new_value, sizeof(new_value));
+	if (!ret)
+		goto out;
+
+	bpf_printk("%s: %s -> %s\n", name, old_value, new_value);
 
 out:
 	return 1; /* Allow read/write */
