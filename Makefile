@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 OUTPUT := .output
+SBINDIR ?= /usr/sbin
 CLANG ?= clang
 LIBBPF_SRC := $(abspath ./libbpf/src)
 LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
@@ -96,6 +97,10 @@ $(OUTPUT)/%.o: %.c $(wildcard %.h) | $(OUTPUT)
 $(APPS): %: $(OUTPUT)/%.o $(LIBBPF_OBJ) | $(OUTPUT)
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ $(ALL_LDFLAGS) -lelf -lz -o $@
+
+install: $(APPS)
+	install -d $(DESTDIR)$(SBINDIR)
+	install -m 644 sysctl $(DESTDIR)$(SBINDIR)/sysctl
 
 # delete failed targets
 .DELETE_ON_ERROR:
