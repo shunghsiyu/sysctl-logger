@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <bpf/bpf.h>
-#include "sysctl.skel.h"
+#include "sysctl-logger.skel.h"
 
 static volatile sig_atomic_t exiting = 0;
 
@@ -30,13 +30,13 @@ int get_root_cgroup(void)
 
 int main(int argc, char **argv)
 {
-	struct sysctl_bpf *skel;
+	struct sysctl_logger_bpf *skel;
 	int bpfd, cfgd, err;
 
 	/* Set up libbpf errors and debug info callback */
 	libbpf_set_print(libbpf_print_fn);
 
-	skel = sysctl_bpf__open_and_load();
+	skel = sysctl_logger_bpf__open_and_load();
 	if (!skel) {
 		fprintf(stderr, "Failed to open BPF skeleton\n");
 		err = errno;
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	fprintf(stderr, "Begin monitoring sysctl changes.\n");
+	fprintf(stderr, "Begin monitoring sysctl_logger changes.\n");
 	fprintf(stderr, "Run `sudo cat /sys/kernel/debug/tracing/trace_pipe` to see the changes\n");
 	while (!exiting) {
 		fprintf(stderr, ".");
@@ -74,6 +74,6 @@ int main(int argc, char **argv)
 	if (err)
 		fprintf(stderr, "Failed to detach BPF program sysctl_logger\n");
 cleanup:
-	sysctl_bpf__destroy(skel);
+	sysctl_logger_bpf__destroy(skel);
 	return -err;
 }

@@ -19,7 +19,7 @@ INCLUDES := -I$(OUTPUT)
 CFLAGS := -g -Wall
 ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 
-APPS = sysctl
+APPS = sysctl-logger
 
 # Get Clang's default includes on this system. We'll explicitly add these dirs
 # to the includes list when compiling with `-target bpf` because otherwise some
@@ -100,7 +100,7 @@ $(APPS): %: $(OUTPUT)/%.o $(LIBBPF_OBJ) | $(OUTPUT)
 
 install: $(APPS)
 	install -d $(DESTDIR)$(SBINDIR)
-	install -m 644 sysctl $(DESTDIR)$(SBINDIR)/sysctl
+	install -m 644 sysctl-logger $(DESTDIR)$(SBINDIR)/sysctl-logger
 
 # delete failed targets
 .DELETE_ON_ERROR:

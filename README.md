@@ -4,7 +4,7 @@ sysctl monitoring with BPF
 
 ## Requirements
 
-To run the provided sysctl binary, please install runtime libraries with the following command:
+To run the provided sysctl-logger binary, please install runtime libraries with the following command:
 
 ```
 sudo zypper install libelf1 zlib
@@ -27,5 +27,5 @@ make
 The sysctl-logger binary can then be executed with
 
 ```
-sudo ./sysctl
+sudo ./sysctl-logger
 ```
