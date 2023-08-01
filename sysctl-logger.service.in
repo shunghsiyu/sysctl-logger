@@ -1,0 +1,10 @@
+[Unit]
+Description=sysctl monitoring with BPF
+DefaultDependencies=no
+Before=systemd-sysctl.service
+
+[Service]
+ExecStart=${SBINDIR}/sysctl-logger
+
+[Install]
+WantedBy=basic.target

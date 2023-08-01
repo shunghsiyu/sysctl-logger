@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 OUTPUT := .output
 SBINDIR ?= /usr/sbin
+UNITDIR ?= /usr/lib/systemd/system
 CLANG ?= clang
 LIBBPF_SRC := $(abspath ./libbpf/src)
 LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
@@ -98,9 +99,14 @@ $(APPS): %: $(OUTPUT)/%.o $(LIBBPF_OBJ) | $(OUTPUT)
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ $(ALL_LDFLAGS) -lelf -lz -o $@
 
-install: $(APPS)
+$(OUTPUT)/sysctl-logger.service: sysctl-logger.service.in | $(OUTPUT)
+	SBINDIR=$(SBINDIR) envsubst < $^ > $@
+
+install: $(APPS) $(OUTPUT)/sysctl-logger.service
 	install -d $(DESTDIR)$(SBINDIR)
 	install -m 644 sysctl-logger $(DESTDIR)$(SBINDIR)/sysctl-logger
+	install -d $(DESTDIR)$(UNITDIR)
+	install -m 644 $(OUTPUT)/sysctl-logger.service $(DESTDIR)$(UNITDIR)/sysctl-logger.service
 
 # delete failed targets
 .DELETE_ON_ERROR:
