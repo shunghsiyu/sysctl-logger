@@ -111,7 +111,7 @@ $(OUTPUT)/sysctl-logger.service: sysctl-logger.service.in | $(OUTPUT)
 
 install: $(APPS) $(OUTPUT)/sysctl-logger.service
 	install -d $(DESTDIR)$(SBINDIR)
-	install -m 644 sysctl-logger $(DESTDIR)$(SBINDIR)/sysctl-logger
+	install -m 755 sysctl-logger $(DESTDIR)$(SBINDIR)/sysctl-logger
 	install -d $(DESTDIR)$(UNITDIR)
 	install -m 644 $(OUTPUT)/sysctl-logger.service $(DESTDIR)$(UNITDIR)/sysctl-logger.service
 
