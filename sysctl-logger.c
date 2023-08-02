@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <bpf/bpf.h>
+#include "sysctl-logger.h"
 #include "sysctl-logger.skel.h"
 
 static volatile sig_atomic_t exiting = 0;

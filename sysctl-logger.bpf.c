@@ -9,33 +9,32 @@
 
 #include <bpf/bpf_helpers.h>
 
-#define MAX_NAME_STR_LEN 32
-#define MAX_VALUE_STR_LEN 0x40
+#include "sysctl-logger.h"
 
 SEC("cgroup/sysctl")
 int sysctl_logger(struct bpf_sysctl *ctx)
 {
-	char name[MAX_NAME_STR_LEN], old_value[MAX_VALUE_STR_LEN], new_value[MAX_VALUE_STR_LEN];
+	struct sysctl_logger_event event;
 	int ret;
 
 	/* Ignore reads */
 	if (!ctx->write)
 		goto out;
 
-	memset(name, 0, sizeof(name));
-	ret = bpf_sysctl_get_name(ctx, name, sizeof(name), 0);
+	memset(event.name, 0, sizeof(event.name));
+	ret = bpf_sysctl_get_name(ctx, event.name, sizeof(event.name), 0);
 	if (!ret)
 		goto out;
 
-	ret = bpf_sysctl_get_current_value(ctx, old_value, sizeof(old_value));
+	ret = bpf_sysctl_get_current_value(ctx, event.old_value, sizeof(event.old_value));
 	if (!ret)
 		goto out;
 
-	ret = bpf_sysctl_get_new_value(ctx, new_value, sizeof(new_value));
+	ret = bpf_sysctl_get_new_value(ctx, event.new_value, sizeof(event.new_value));
 	if (!ret)
 		goto out;
 
-	bpf_printk("%s: %s -> %s\n", name, old_value, new_value);
+	bpf_printk("%s: %s -> %s\n", event.name, event.old_value, event.new_value);
 
 out:
 	return 1; /* Allow read/write */
