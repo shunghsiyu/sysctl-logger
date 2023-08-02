@@ -29,9 +29,19 @@ int get_root_cgroup(void)
 	return fd;
 }
 
+int handle_ringbuf_event(void *ctx, void *data, size_t data_sz)
+{
+	const struct sysctl_logger_event *event = (struct sysctl_logger_event*) data;
+
+	printf("%s: %s -> %s\n", event->name, event->old_value, event->new_value);
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	struct sysctl_logger_bpf *skel;
+	struct ring_buffer *rb = NULL;
 	int bpfd, cfgd, err;
 
 	/* Set up libbpf errors and debug info callback */
@@ -57,6 +67,13 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	rb = ring_buffer__new(bpf_map__fd(skel->maps.rb), handle_ringbuf_event, NULL, NULL);
+	if (!rb) {
+		err = -1;
+		fprintf(stderr, "Failed to create ring buffer\n");
+		goto cleanup;
+	}
+
 	bpfd = bpf_program__fd(skel->progs.sysctl_logger);
 	err = bpf_prog_attach(bpfd, cfgd, BPF_CGROUP_SYSCTL, BPF_F_ALLOW_MULTI);
 	if (err) {
@@ -65,10 +82,17 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stderr, "Begin monitoring sysctl_logger changes.\n");
-	fprintf(stderr, "Run `sudo cat /sys/kernel/debug/tracing/trace_pipe` to see the changes\n");
 	while (!exiting) {
-		fprintf(stderr, ".");
-		sleep(1);
+		err = ring_buffer__poll(rb, 100 /* timeout, ms */);
+		/* Ctrl-C will cause -EINTR */
+		if (err == -EINTR) {
+			err = 0;
+			break;
+		}
+		if (err < 0) {
+			fprintf(stderr, "Error polling ring buffer: %d\n", err);
+			break;
+		}
 	}
 
 	err = bpf_prog_detach2(bpfd, cfgd, BPF_CGROUP_SYSCTL);

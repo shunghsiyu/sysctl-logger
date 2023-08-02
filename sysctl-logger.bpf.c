@@ -11,31 +11,45 @@
 
 #include "sysctl-logger.h"
 
+struct {
+	__uint(type, BPF_MAP_TYPE_RINGBUF);
+	__uint(max_entries, 512 * 1024 /* 256 KB */);
+} rb SEC(".maps");
+
 SEC("cgroup/sysctl")
 int sysctl_logger(struct bpf_sysctl *ctx)
 {
-	struct sysctl_logger_event event;
+	struct sysctl_logger_event *event;
 	int ret;
 
 	/* Ignore reads */
 	if (!ctx->write)
 		goto out;
 
-	memset(event.name, 0, sizeof(event.name));
-	ret = bpf_sysctl_get_name(ctx, event.name, sizeof(event.name), 0);
-	if (!ret)
+	event = bpf_ringbuf_reserve(&rb, sizeof(*event), 0);
+	if (!event)
 		goto out;
 
-	ret = bpf_sysctl_get_current_value(ctx, event.old_value, sizeof(event.old_value));
+	memset(event->name, 0, sizeof(event->name));
+	ret = bpf_sysctl_get_name(ctx, event->name, sizeof(event->name), 0);
 	if (!ret)
-		goto out;
+		goto discard;
 
-	ret = bpf_sysctl_get_new_value(ctx, event.new_value, sizeof(event.new_value));
+	ret = bpf_sysctl_get_current_value(ctx, event->old_value, sizeof(event->old_value));
 	if (!ret)
-		goto out;
+		goto discard;
 
-	bpf_printk("%s: %s -> %s\n", event.name, event.old_value, event.new_value);
+	ret = bpf_sysctl_get_new_value(ctx, event->new_value, sizeof(event->new_value));
+	if (!ret)
+		goto discard;
 
+	bpf_ringbuf_submit(event, 0);
+	goto out;
+
+discard:
+	/* TODO: emit some sort of error message to help diagnose issue when
+	 *       discarding. */
+	bpf_ringbuf_discard(event, 0);
 out:
 	return 1; /* Allow read/write */
 }
