@@ -55,15 +55,13 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	err = signal(SIGINT, sig_int);
-	if (err == SIG_ERR) {
+	if (signal(SIGINT, sig_int) == SIG_ERR) {
 		err = errno;
 		fprintf(stderr, "Can't set SIGINT signal handler: %s\n", strerror(errno));
 		goto cleanup;
 	}
 
-	err = signal(SIGTERM, sig_int);
-	if (err == SIG_ERR) {
+	if (signal(SIGTERM, sig_int) == SIG_ERR) {
 		err = errno;
 		fprintf(stderr, "Can't set SIGTERM signal handler: %s\n", strerror(errno));
 		goto cleanup;
