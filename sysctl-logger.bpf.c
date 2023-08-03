@@ -30,6 +30,9 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	if (!event)
 		goto out;
 
+	event->pid = bpf_get_current_pid_tgid() >> 32;
+	bpf_get_current_comm(&event->comm, sizeof(event->comm));
+
 	memset(event->name, 0, sizeof(event->name));
 	ret = bpf_sysctl_get_name(ctx, event->name, sizeof(event->name), 0);
 	if (!ret)
