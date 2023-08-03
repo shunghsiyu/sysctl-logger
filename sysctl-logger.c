@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdio.h>
 #include <bpf/bpf.h>
 #include "sysctl-logger.h"
 #include "sysctl-logger.skel.h"
@@ -35,6 +36,7 @@ int handle_ringbuf_event(void *ctx, void *data, size_t data_sz)
 
 	printf("%s[%d] changed %s from %s to %s\n", event->comm, event->pid,
 			event->name, event->old_value, event->new_value);
+	fflush(stdout);
 
 	return 0;
 }
