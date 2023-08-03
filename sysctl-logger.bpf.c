@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#include <stdint.h>
 #include <string.h>
-
-#include <linux/stddef.h>
-#include <linux/bpf.h>
-
+#include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
 
 #include "sysctl-logger.h"
@@ -30,8 +26,14 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	if (!event)
 		goto out;
 
+#if HAVE_CGROUP_CURRENT_FUNC_PROTO
 	event->pid = bpf_get_current_pid_tgid() >> 32;
 	bpf_get_current_comm(&event->comm, sizeof(event->comm));
+#else
+	struct task_struct *current = (struct task_struct *)bpf_get_current_task();
+	bpf_probe_read_kernel(&event->pid, sizeof(event->pid), &current->pid);
+	bpf_probe_read_kernel_str(&event->comm, sizeof(event->comm), &current->comm);
+#endif /* HAVE_CGROUP_CURRENT_FUNC_PROTO */
 
 	memset(event->name, 0, sizeof(event->name));
 	ret = bpf_sysctl_get_name(ctx, event->name, sizeof(event->name), 0);
