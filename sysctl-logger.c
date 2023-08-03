@@ -8,6 +8,10 @@
 
 static volatile sig_atomic_t exiting = 0;
 
+static struct env {
+	bool verbose;
+} env;
+
 static void sig_int(int signo)
 {
 	exiting = 1;
@@ -15,6 +19,8 @@ static void sig_int(int signo)
 
 static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va_list args)
 {
+	if (level == LIBBPF_DEBUG && !env.verbose)
+		return 0;
 	return vfprintf(stderr, format, args);
 }
 
@@ -46,6 +52,9 @@ int main(int argc, char **argv)
 	struct sysctl_logger_bpf *skel;
 	struct ring_buffer *rb = NULL;
 	int bpfd, cfgd, err;
+
+	if (getenv("DEBUG"))
+		env.verbose = true;
 
 	/* Set up libbpf errors and debug info callback */
 	libbpf_set_print(libbpf_print_fn);
