@@ -5,6 +5,9 @@ Before=systemd-sysctl.service
 
 [Service]
 ExecStart=${SBINDIR}/sysctl-logger
+StandardError=journal
+StandardOutput=journal
+StandardInput=null
 
 [Install]
 WantedBy=basic.target
