@@ -1,7 +1,7 @@
 #ifndef __SYSCTL_LOGGER_H
 #define __SYSCTL_LOGGER_H
 
-#define MAX_NAME_STR_LEN 32
+#define MAX_NAME_STR_LEN 48
 #define MAX_VALUE_STR_LEN 0x40
 #define TASK_COMM_LEN 16
 
