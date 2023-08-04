@@ -18,7 +18,7 @@ SEC("cgroup/sysctl")
 int sysctl_logger(struct bpf_sysctl *ctx)
 {
 	struct sysctl_logger_event *event;
-	long ret; /* Need to use long here to avoid verifier choking up */
+	int ret;
 
 	/* Ignore reads */
 	if (!ctx->write)
@@ -39,9 +39,8 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 
 	memset(event->name, 0, sizeof(event->name));
 	ret = bpf_sysctl_get_name(ctx, event->name, sizeof(event->name), 0);
-	if (ret < 0) { /* Can only be -E2BIG */
+	if (ret < 0) /* Can only be -E2BIG */
 		event->truncated = true;
-	}
 
 	ret = bpf_sysctl_get_current_value(ctx, event->old_value, sizeof(event->old_value));
 	if (ret == -E2BIG) {
@@ -49,16 +48,11 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	} else if (ret < 0) { /* -EINVAL  if  current  value  was  unavailable */
 		bpf_ringbuf_discard(event, 0);
 		goto out;
-	} else if (ret > 0 && ret < sizeof(event->old_value)) {
-		event->old_value[ret-1] = 0;
 	}
 
 	ret = bpf_sysctl_get_new_value(ctx, event->new_value, sizeof(event->new_value));
-	if (ret < 0) { /* Can only be -E2BIG since reads are ignored */
+	if (ret < 0) /* Can only be -E2BIG since reads are ignored */
 		event->truncated = true;
-	} else if (ret > 0 && ret < sizeof(event->new_value)) {
-		event->new_value[ret-1] = 0;
-	}
 
 	bpf_ringbuf_submit(event, 0);
 out:

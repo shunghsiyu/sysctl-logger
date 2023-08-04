@@ -38,13 +38,18 @@ int get_root_cgroup(void)
 
 int handle_ringbuf_event(void *ctx, void *data, size_t data_sz)
 {
-	const struct sysctl_logger_event *event = (struct sysctl_logger_event*) data;
+	struct sysctl_logger_event event;
 	char *warning = "";
 
-	if (event->truncated)
+	event = *(struct sysctl_logger_event*) data;
+
+	if (event.truncated)
 		warning = " (note: truncation has occurred so the name or value may not be complete)";
-	printf("%s[%d] changed %s from %s to %s%s\n", event->comm, event->pid,
-			event->name, event->old_value, event->new_value, warning);
+
+	event.old_value[strcspn(event.old_value, "\n")] = 0;
+	event.new_value[strcspn(event.new_value, "\n")] = 0;
+	printf("%s[%d] changed %s from %s to %s%s\n", event.comm, event.pid,
+			event.name, event.old_value, event.new_value, warning);
 	fflush(stdout);
 
 	return 0;
