@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#include <string.h>
 #include <vmlinux.h>
+
+#include <errno.h>
+#include <string.h>
 #include <bpf/bpf_helpers.h>
 
 #include "sysctl-logger.h"
@@ -37,24 +39,24 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 
 	memset(event->name, 0, sizeof(event->name));
 	ret = bpf_sysctl_get_name(ctx, event->name, sizeof(event->name), 0);
-	if (!ret)
-		goto discard;
+	if (ret < 0) { /* Can only be -E2BIG */
+		event->truncated = true;
+	}
 
 	ret = bpf_sysctl_get_current_value(ctx, event->old_value, sizeof(event->old_value));
-	if (!ret)
-		goto discard;
+	if (ret == -E2BIG) {
+		event->truncated = true;
+	} else if (ret < 0) { /* -EINVAL  if  current  value  was  unavailable */
+		bpf_ringbuf_discard(event, 0);
+		goto out;
+	}
 
 	ret = bpf_sysctl_get_new_value(ctx, event->new_value, sizeof(event->new_value));
-	if (!ret)
-		goto discard;
+	if (ret < 0) { /* Can only be -E2BIG since reads are ignored */
+		event->truncated = true;
+	}
 
 	bpf_ringbuf_submit(event, 0);
-	goto out;
-
-discard:
-	/* TODO: emit some sort of error message to help diagnose issue when
-	 *       discarding. */
-	bpf_ringbuf_discard(event, 0);
 out:
 	return 1; /* Allow read/write */
 }
