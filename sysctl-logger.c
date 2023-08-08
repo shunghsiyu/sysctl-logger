@@ -69,8 +69,10 @@ int main(int argc, char **argv)
 	libbpf_set_print(libbpf_print_fn);
 
 	opts.sz = sizeof(opts);
+#if (LIBBPF_MAJOR_VERSION != 0) || (LIBBPF_MINOR_VERSION >= 7)
 	if (env.verbose)
 		opts.kernel_log_level = 4 | 2 | 1;
+#endif
 	skel = sysctl_logger_bpf__open_opts(&opts);
 	if (!skel) {
 		fprintf(stderr, "Failed to open BPF skeleton\n");
