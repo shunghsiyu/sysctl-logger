@@ -4,6 +4,7 @@ LIBDIR ?= /usr/lib64
 SBINDIR ?= /usr/sbin
 UNITDIR ?= /usr/lib/systemd/system
 CLANG ?= clang
+VMLINUX_BTF ?= /sys/kernel/btf/vmlinux
 LIBBPF_SRC := $(abspath ./libbpf/src)
 ifdef FORCE_SYSTEM_LIBBPF
 	LIBBPF_OBJ := $(LIBDIR)/libbpf.so
@@ -82,7 +83,7 @@ $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPU
 endif
 
 $(OUTPUT)/vmlinux.h: | $(OUTPUT) $(BPFTOOL)
-	$(Q)$(BPFTOOL) btf dump file /sys/kernel/btf/vmlinux format c >$@
+	$(Q)$(BPFTOOL) btf dump file $(VMLINUX_BTF) format c >$@
 
 # Build BPF code
 $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(OUTPUT)/vmlinux.h | $(OUTPUT) $(BPFTOOL)
