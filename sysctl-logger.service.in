@@ -1,6 +1,7 @@
 [Unit]
 Description=sysctl monitoring with BPF
 DefaultDependencies=no
+Wants=systemd-sysctl.service
 Before=systemd-sysctl.service
 
 [Service]
@@ -11,4 +12,4 @@ StandardInput=null
 LimitMEMLOCK=infinity # Might not be necessary
 
 [Install]
-WantedBy=basic.target
+WantedBy=sysinit.target
