@@ -5,6 +5,7 @@ Wants=systemd-sysctl.service
 Before=systemd-sysctl.service
 
 [Service]
+Type=notify
 ExecStart=${SBINDIR}/sysctl-logger
 StandardError=journal
 StandardOutput=journal
