@@ -15,7 +15,7 @@ sudo zypper install libelf1 zlib
 To build the binary, first run the following command to install built-time requirements:
 
 ```
-sudo zypper install gcc clang make glibc-devel glibc-devel-32bit bpftool libelf-devel zlib-devel gettext-runtime systemd-devel
+sudo zypper install gcc clang make glibc-devel glibc-devel-32bit bpftool libelf-devel zlib-devel gettext-runtime
 ```
 
 Then build the binary with

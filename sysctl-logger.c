@@ -3,7 +3,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <bpf/bpf.h>
-#include <systemd/sd-daemon.h>
 #include "sysctl-logger.h"
 #include "sysctl-logger.skel.h"
 
@@ -119,8 +118,6 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Failed to attach BPF program sysctl_logger\n");
 		goto cleanup;
 	}
-
-	sd_notify(0, "READY=1");
 
 	fprintf(stderr, "Begin monitoring sysctl_logger changes.\n");
 	while (!exiting) {
