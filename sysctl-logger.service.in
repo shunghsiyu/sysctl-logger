@@ -3,6 +3,7 @@ Description=sysctl monitoring with BPF
 DefaultDependencies=no
 Wants=systemd-sysctl.service
 Before=systemd-sysctl.service
+RequiresMountsFor=${SBINDIR}/sysctl-logger
 
 [Service]
 Type=exec
