@@ -11,7 +11,8 @@ ExecStart=${SBINDIR}/sysctl-logger
 StandardError=journal
 StandardOutput=journal
 StandardInput=null
-LimitMEMLOCK=infinity # Might not be necessary
+# Raising the memlock limit might not be necessary
+LimitMEMLOCK=infinity
 
 [Install]
 WantedBy=sysinit.target
