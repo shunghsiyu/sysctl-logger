@@ -6,6 +6,7 @@ Before=systemd-sysctl.service
 RequiresMountsFor=${SBINDIR}/sysctl-logger
 
 [Service]
+Type=exec
 ExecStart=${SBINDIR}/sysctl-logger
 StandardError=journal
 StandardOutput=journal
