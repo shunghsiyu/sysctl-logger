@@ -3,8 +3,7 @@
 
 #include <vmlinux.h>
 
-#include <errno.h>
-#include <string.h>
+#include <linux/errno.h>
 #include <bpf/bpf_helpers.h>
 
 #include "sysctl-logger.h"
@@ -37,7 +36,7 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	bpf_probe_read_kernel_str(&event->comm, sizeof(event->comm), &current->comm);
 #endif /* HAVE_CGROUP_CURRENT_FUNC_PROTO */
 
-	memset(event->name, 0, sizeof(event->name));
+	__builtin_memset(event->name, 0, sizeof(event->name));
 	ret = bpf_sysctl_get_name(ctx, event->name, sizeof(event->name), 0);
 	if (ret < 0) /* Can only be -E2BIG */
 		event->truncated = true;
