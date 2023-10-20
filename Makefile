@@ -25,6 +25,7 @@ ARCH ?= $(shell uname -m | sed 's/x86_64/x86/' \
 INCLUDES := -I$(OUTPUT)
 CFLAGS := -g -Wall
 ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
+BPF_CFLAGS :=
 
 APPS = sysctl-logger
 
@@ -82,6 +83,10 @@ $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPU
 		    install
 endif
 
+ifdef CGROUP_CURRENT_FUNC_PROTO
+BPF_CFLAGS += -DHAVE_CGROUP_CURRENT_FUNC_PROTO
+endif
+
 $(OUTPUT)/vmlinux.h: | $(OUTPUT) $(BPFTOOL)
 	$(Q)$(BPFTOOL) btf dump file $(VMLINUX_BTF) format c >$@
 
@@ -89,7 +94,7 @@ $(OUTPUT)/vmlinux.h: | $(OUTPUT) $(BPFTOOL)
 $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(OUTPUT)/vmlinux.h | $(OUTPUT) $(BPFTOOL)
 	$(call msg,BPF,$@)
 	$(Q)$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH)		      \
-		     $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES)		      \
+		     $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) $(BPF_CFLAGS)      \
 		     -c $(filter %.c,$^) -o $(patsubst %.bpf.o,%.tmp.bpf.o,$@)
 	$(Q)$(BPFTOOL) gen object $@ $(patsubst %.bpf.o,%.tmp.bpf.o,$@)
 
