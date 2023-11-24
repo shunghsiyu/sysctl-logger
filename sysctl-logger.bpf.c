@@ -27,14 +27,20 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	if (!event)
 		goto out;
 
+	struct task_struct *current = (struct task_struct *)bpf_get_current_task();
+
 #if HAVE_CGROUP_CURRENT_FUNC_PROTO
 	event->pid = bpf_get_current_pid_tgid() >> 32;
 	bpf_get_current_comm(&event->comm, sizeof(event->comm));
 #else
-	struct task_struct *current = (struct task_struct *)bpf_get_current_task();
 	bpf_probe_read_kernel(&event->pid, sizeof(event->pid), &current->pid);
 	bpf_probe_read_kernel_str(&event->comm, sizeof(event->comm), &current->comm);
 #endif /* HAVE_CGROUP_CURRENT_FUNC_PROTO */
+
+	struct task_struct *parent;
+	bpf_probe_read_kernel(&parent, sizeof(parent), &current->real_parent);
+	bpf_probe_read_kernel(&event->parent_pid, sizeof(event->parent_pid), &parent->pid);
+	bpf_probe_read_kernel_str(&event->parent_comm, sizeof(event->parent_comm), &parent->comm);
 
 	__builtin_memset(event->name, 0, sizeof(event->name));
 	ret = bpf_sysctl_get_name(ctx, event->name, sizeof(event->name), 0);

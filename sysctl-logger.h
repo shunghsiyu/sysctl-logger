@@ -7,8 +7,10 @@
 
 struct sysctl_logger_event {
 	int pid;
+	int parent_pid;
 	bool truncated;
 	char comm[TASK_COMM_LEN];
+	char parent_comm[TASK_COMM_LEN];
 	char name[MAX_NAME_STR_LEN];
 	char old_value[MAX_VALUE_STR_LEN];
 	char new_value[MAX_VALUE_STR_LEN];
