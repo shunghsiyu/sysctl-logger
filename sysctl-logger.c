@@ -52,7 +52,8 @@ int handle_ringbuf_event(void *ctx, void *data, size_t data_sz)
 	if (event.truncated || strncmp(event.old_value, event.new_value, sizeof(event.new_value))) {
 		printf("%s[%d](%s[%d]) changed %s from %s to %s%s\n",
                        event.comm, event.pid, event.parent_comm, event.parent_pid,
-                       event.name, event.old_value, event.new_value, warning);
+                       event.name, ((event.old_value[0] == '\0') ? "''" : event.old_value),
+                       ((event.new_value[0] == '\0') ? "''" : event.new_value), warning);
 		fflush(stdout);
 	}
 
