@@ -14,5 +14,21 @@ StandardInput=null
 # Raising the memlock limit might not be necessary
 LimitMEMLOCK=infinity
 
+MemoryDenyWriteExecute=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RestrictAddressFamilies=none
+RestrictNamespaces=cgroup
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
 [Install]
 WantedBy=sysinit.target
