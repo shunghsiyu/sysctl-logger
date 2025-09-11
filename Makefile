@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
-OUTPUT := .output
+OUTPUT := output
 LIBDIR ?= /usr/lib64
 SBINDIR ?= /usr/sbin
 UNITDIR ?= /usr/lib/systemd/system
