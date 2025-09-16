@@ -6,11 +6,7 @@ UNITDIR ?= /usr/lib/systemd/system
 CLANG ?= clang
 VMLINUX_BTF ?= /sys/kernel/btf/vmlinux
 LIBBPF_SRC := $(abspath ./libbpf/src)
-ifdef FORCE_SYSTEM_LIBBPF
-	LIBBPF_OBJ := $(LIBDIR)/libbpf.so
-else
-	LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
-endif
+LIBBPF_OBJ := $(LIBDIR)/libbpf.so
 BPFTOOL ?= /usr/sbin/bpftool
 ARCH ?= $(shell uname -m | sed 's/x86_64/x86/' \
 			 | sed 's/arm.*/arm/' \
@@ -72,16 +68,6 @@ clean:
 $(OUTPUT) $(OUTPUT)/libbpf:
 	$(call msg,MKDIR,$@)
 	$(Q)mkdir -p $@
-
-ifndef FORCE_SYSTEM_LIBBPF
-# Build libbpf
-$(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPUT)/libbpf
-	$(call msg,LIB,$@)
-	$(Q)$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=1		      \
-		    OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@)		      \
-		    INCLUDEDIR= LIBDIR= UAPIDIR=			      \
-		    install
-endif
 
 ifdef CGROUP_CURRENT_FUNC_PROTO
 BPF_CFLAGS += -DHAVE_CGROUP_CURRENT_FUNC_PROTO
