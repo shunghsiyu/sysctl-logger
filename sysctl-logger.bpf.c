@@ -8,18 +8,32 @@
 
 #include "sysctl-logger.h"
 
+/*
+ * Ring buffer for passing sysctl change events to userspace.
+ * Size: 512 KB (can hold many events before userspace needs to poll)
+ */
 struct {
 	__uint(type, BPF_MAP_TYPE_RINGBUF);
-	__uint(max_entries, 512 * 1024 /* 256 KB */);
+	__uint(max_entries, 512 * 1024 /* 512 KB */);
 } rb SEC(".maps");
 
+/*
+ * sysctl_logger - BPF program to log sysctl write operations
+ * @ctx: BPF sysctl context containing operation details
+ *
+ * This program is attached to cgroup/sysctl and triggers on all sysctl
+ * operations. It captures write operations and sends event data to userspace
+ * via a ring buffer.
+ *
+ * Returns: 1 to allow the operation to proceed
+ */
 SEC("cgroup/sysctl")
 int sysctl_logger(struct bpf_sysctl *ctx)
 {
 	struct sysctl_logger_event *event;
 	int ret;
 
-	/* Ignore reads */
+	/* Ignore read operations, only log writes */
 	if (!ctx->write)
 		goto out;
 
@@ -27,8 +41,15 @@ int sysctl_logger(struct bpf_sysctl *ctx)
 	if (!event)
 		goto out;
 
+	event->truncated = false;
+
 	struct task_struct *current = (struct task_struct *)bpf_get_current_task();
 
+	/*
+	 * Get current process PID and command name.
+	 * Newer kernels support direct helper functions for cgroup programs.
+	 * Older kernels require reading from task_struct.
+	 */
 #if HAVE_CGROUP_CURRENT_FUNC_PROTO
 	event->pid = bpf_get_current_pid_tgid() >> 32;
 	bpf_get_current_comm(&event->comm, sizeof(event->comm));

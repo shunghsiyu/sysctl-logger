@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, claude/** ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          clang \
+          llvm \
+          gcc \
+          make \
+          libbpf-dev \
+          linux-tools-common \
+          linux-tools-generic \
+          libelf-dev \
+          zlib1g-dev \
+          clang-format
+
+        # Install bpftool if not available via linux-tools
+        if ! command -v bpftool &> /dev/null; then
+          echo "bpftool not found in linux-tools, attempting manual installation..."
+          # Try to find bpftool in kernel tools directory
+          BPFTOOL_PATH=$(find /usr/lib -name bpftool 2>/dev/null | head -n 1)
+          if [ -n "$BPFTOOL_PATH" ]; then
+            sudo ln -sf "$BPFTOOL_PATH" /usr/sbin/bpftool
+          else
+            echo "Warning: bpftool not found, build may fail"
+          fi
+        fi
+
+    - name: Check code formatting
+      run: |
+        # Check if code follows clang-format style
+        clang-format --version
+        find . -name "*.c" -o -name "*.h" | grep -v "output/" | while read -r file; do
+          if ! clang-format --dry-run --Werror "$file" 2>/dev/null; then
+            echo "::warning file=$file::Code formatting issues found in $file"
+            echo "Run 'clang-format -i $file' to fix"
+          fi
+        done
+
+    - name: Build project
+      run: |
+        make clean
+        make V=1
+
+    - name: Check for compilation warnings
+      run: |
+        # Rebuild with extra warnings
+        make clean
+        CFLAGS="-g -Wall -Wextra -Werror" make V=1 || {
+          echo "::error::Build failed with strict warnings enabled"
+          exit 1
+        }
+
+    - name: Verify binary was created
+      run: |
+        if [ ! -f sysctl-logger ]; then
+          echo "::error::sysctl-logger binary was not created"
+          exit 1
+        fi
+        file sysctl-logger
+        ldd sysctl-logger || true
